@@ -1,111 +1,78 @@
-import { useState } from 'react';
+¡Claro que sí! Aquí tienes el código completo para reemplazar todo el contenido del archivo Formulario.jsx.   Copia este bloque de código, borra todo lo que tienes actualmente en GitHub y pégalo ahí:   JavaScriptimport { useState } from 'react';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export function Formulario() {
   const [nombre, setNombre] = useState('');
-  const [correo, setCorreo] = useState('');
-  const [residuo, setResiduo] = useState('');
-  const [errores, setErrores] = useState({});
-  const [enviadoExito, setEnviadoExito] = useState(false);
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [mensaje, setMensaje] = useState('');
 
-  const validarFormulario = () => {
-    let nuevosErrores = {};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMensaje('');
 
-    if (!nombre.trim()) {
-      nuevosErrores.nombre = 'El nombre completo es obligatorio.';
-    }
-
-    if (!correo.trim()) {
-      nuevosErrores.correo = 'El correo electrónico es obligatorio.';
-    } else {
-      const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!regexCorreo.test(correo)) {
-        nuevosErrores.correo = 'El formato del correo electrónico no es válido.';
-      }
-    }
-
-    if (!residuo) {
-      nuevosErrores.residuo = 'Por favor selecciona una opción de residuo.';
-    }
-
-    setErrores(nuevosErrores);
-    return Object.keys(nuevosErrores).length === 0;
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    setEnviadoExito(false);
-
-    if (validarFormulario()) {
-      console.log('Datos enviados:', { nombre, correo, residuo });
-      setEnviadoExito(true);
+    try {
+      // Guardar el registro directamente en la colección 'registros' de Firestore
+      await addDoc(collection(db, "registros"), {
+        nombre: nombre,
+        email: email,
+        fecha: new Date()
+      });
+      setMensaje('¡Registro guardado exitosamente en la base de datos!');
       setNombre('');
-      setCorreo('');
-      setResiduo('');
-      setErrores({});
+      setEmail('');
+    } catch (error) {
+      console.error("Error al guardar:", error);
+      setMensaje('Hubo un error al guardar los datos.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <main>
-      <section id="registro" className="registro">
-        <h2>Regístrate en EcoConnect</h2>
-        <p className="subtitle">
-          Completa el formulario para unirte a nuestra comunidad y comenzar a ganar recompensas por reciclar.
+    <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
+      <h2>Registro de Usuarios</h2>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <div>
+          <label style={{ display: 'block', marginBottom: '5px' }}>Nombre completo:</label>
+          <input 
+            type="text" 
+            placeholder="Escribe tu nombre" 
+            value={nombre} 
+            onChange={(e) => setNombre(e.target.value)} 
+            required 
+            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '5px' }}>Correo electrónico:</label>
+          <input 
+            type="email" 
+            placeholder="ejemplo@correo.com" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            required 
+            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+          />
+        </div>
+        <button 
+          type="submit" 
+          disabled={loading}
+          style={{ padding: '10px 15px', backgroundColor: '#2c5e3b', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          {loading ? 'Guardando...' : 'Registrar'}
+        </button>
+      </form>
+
+      {mensaje && (
+        <p style={{ marginTop: '15px', fontWeight: 'bold', color: mensaje.includes('exitosamente') ? 'green' : 'red' }}>
+          {mensaje}
         </p>
-
-        <form id="registroForm" onSubmit={handleSubmit} noValidate>
-          <div className="campo">
-            <label htmlFor="nombre">Nombre completo</label>
-            <input
-              type="text"
-              id="nombre"
-              placeholder="Ingresa tu nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-            />
-            {errores.nombre && <span className="error-text" style={{ color: '#d9534f', fontSize: '13px', marginTop: '5px', display: 'block' }}>{errores.nombre}</span>}
-          </div>
-
-          <div className="campo">
-            <label htmlFor="correo">Correo electrónico</label>
-            <input
-              type="email"
-              id="correo"
-              placeholder="ejemplo@correo.com"
-              value={correo}
-              onChange={(e) => setCorreo(e.target.value)}
-            />
-            {errores.correo && <span className="error-text" style={{ color: '#d9534f', fontSize: '13px', marginTop: '5px', display: 'block' }}>{errores.correo}</span>}
-          </div>
-
-          <div className="campo">
-            <label htmlFor="residuo">Residuo que reciclas con más frecuencia</label>
-            <select
-              id="residuo"
-              value={residuo}
-              onChange={(e) => setResiduo(e.target.value)}
-            >
-              <option value="">Selecciona una opción</option>
-              <option value="Plástico">Plástico</option>
-              <option value="Papel">Papel</option>
-              <option value="Vidrio">Vidrio</option>
-              <option value="Metal">Metal</option>
-              <option value="Orgánicos">Orgánicos</option>
-            </select>
-            {errores.residuo && <span className="error-text" style={{ color: '#d9534f', fontSize: '13px', marginTop: '5px', display: 'block' }}>{errores.residuo}</span>}
-          </div>
-
-          <button type="submit" className="btn">
-            Registrarme
-          </button>
-
-          {enviadoExito && (
-            <div className="success-message" style={{ marginTop: '20px', padding: '15px', backgroundColor: '#d4edda', color: '#155724', borderRadius: '8px', fontWeight: 'bold' }}>
-              ¡Bienvenido a EcoConnect! Tu registro fue realizado con éxito.
-            </div>
-          )}
-        </form>
-      </section>
-    </main>
+      )}
+    </div>
   );
 }
+
+export default Formulario;
